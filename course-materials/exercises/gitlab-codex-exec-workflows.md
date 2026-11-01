@@ -90,10 +90,15 @@ Różnice w YAML względem wzoru:
 
   Sprawdź go celowo nieprzechodzącym testem na osobnej gałęzi, a potem usuń ten test.
 - **W5:** reguła `- if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "master"`.
-- **W6:** reguła `- if: $CI_PIPELINE_SOURCE == "schedule"`. Wynik zapisz jako zgłoszenie zamiast komentarza w MR:
+- **W6:** reguła `- if: $CI_PIPELINE_SOURCE == "schedule"`. W harmonogramie nie ma merge requestu, więc usuń `git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"` i krok z komentarzem w MR, a w prompcie analizuj bieżącą gałąź. Wynik zapisz jako zgłoszenie (blok `|`, bo zwykły tekst YAML z `: ` w środku GitLab odrzuca):
 
   ```yaml
-  - jq -n --arg t "Raport nocny $(date +%F)" --rawfile d .agent/nightly.md '{title:$t, description:$d}' | curl -fsS -X POST -H "PRIVATE-TOKEN: $GITLAB_TOKEN" -H "Content-Type: application/json" --data @- "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues" > /dev/null
+  script:
+    - bash ci/agent-review/codex_run.sh ci/prompts/nightly.md .agent/nightly.md
+    - |
+      jq -n --arg t "Raport nocny $(date +%F)" --rawfile d .agent/nightly.md '{title:$t, description:$d}' \
+        | curl -fsS -X POST -H "PRIVATE-TOKEN: $GITLAB_TOKEN" -H "Content-Type: application/json" \
+          --data @- "$CI_API_V4_URL/projects/$CI_PROJECT_ID/issues" > /dev/null
   ```
 
   Harmonogram tworzysz i uruchamiasz od razu, bez czekania na noc:

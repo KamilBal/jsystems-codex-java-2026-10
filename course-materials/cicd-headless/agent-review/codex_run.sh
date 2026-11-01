@@ -12,11 +12,15 @@ set -euo pipefail
 PROMPT_FILE="${1:?Usage: codex_run.sh <prompt-file> <output-file>}"
 OUT="${2:?Usage: codex_run.sh <prompt-file> <output-file>}"
 mkdir -p "$(dirname "$OUT")"
+# Read the prompt first: a failed $(cat) inside the codex arguments would not stop set -e and
+# would start a paid run with an empty prompt.
+PROMPT="$(cat "$PROMPT_FILE")"
+[ -n "$PROMPT" ] || { echo "Empty prompt file: $PROMPT_FILE" >&2; exit 1; }
 
 codex exec --sandbox "${CODEX_SANDBOX:-read-only}" --skip-git-repo-check --ephemeral \
   -c model_provider=openrouter \
   -c 'model_providers.openrouter={name="OpenRouter",base_url="https://openrouter.ai/api/v1",env_key="OPENROUTER_API_KEY",wire_api="responses"}' \
   -m "${MODEL:-openai/gpt-6-luna}" \
-  -o "$OUT" "$(cat "$PROMPT_FILE")" > "$OUT.log"
+  -o "$OUT" "$PROMPT" > "$OUT.log"
 
 echo "Result written to $OUT"

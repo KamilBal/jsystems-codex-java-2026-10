@@ -346,8 +346,9 @@ git switch -c t5-and-specification
 Jeśli masz gałąź z kroku 5, włącz do niej pipeline:
 
 ```powershell
+git fetch origin
 git switch feature/cargo-status
-git merge master
+git merge origin/master
 git push
 ```
 
